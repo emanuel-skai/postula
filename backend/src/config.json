@@ -1,0 +1,11 @@
+{
+  "engine": "cohere",
+  "model": "embed-v4.0",
+  "tau": 0.28,
+  "queryInputType": "search_query",
+  "documentInputType": "search_document",
+  "minWords": 4,
+  "maxLinesPerSide": 80,
+  "calibrationModels": ["embed-v4.0", "embed-multilingual-v3.0", "embed-multilingual-light-v3.0"],
+  "_note": "tau y model se cambian aquí sin tocar código. tau se elige con la calibración (Tabla 11): el que maximiza F1 sobre los 20 pares etiquetados."
+}

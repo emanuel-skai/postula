@@ -1,0 +1,12 @@
+import { createThirdwebClient } from "thirdweb";
+import { privateKeyToAccount } from "thirdweb/wallets";
+import { signLoginPayload } from "thirdweb/auth";
+import { randomBytes } from "node:crypto";
+const API = process.env.API ?? process.env.VITE_API_URL;
+if (!API) throw new Error("Define API (URL de la API desplegada)");
+const client = createThirdwebClient({ clientId: process.env.VITE_THIRDWEB_CLIENT_ID });
+const account = privateKeyToAccount({ client, privateKey: "0x" + randomBytes(32).toString("hex") });
+const payload = await (await fetch(`${API}/api/auth/payload?address=${account.address}&chainId=1`)).json();
+const signed = await signLoginPayload({ payload, account });
+const { token } = await (await fetch(`${API}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(signed) })).json();
+process.stdout.write(token);

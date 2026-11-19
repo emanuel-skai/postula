@@ -1,0 +1,197 @@
+{
+ "_note": "Set A: 20 pares (10 misma habilidad, 10 no) etiquetados ANTES de correr cualquier modelo (2026-11-10). Set B: 12 pares difíciles (misma área con habilidad distinta + paráfrasis sin palabras compartidas), etiquetados por significado el mismo día tras observar falsos positivos con τ calibrado solo en A. τ de config se elige sobre A+B.",
+ "pairs": [
+  {
+   "req": "Experiencia creando tableros en Power BI o Tableau",
+   "line": "Construí dashboards interactivos de ventas en Tableau para la gerencia",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Dominio de SQL para consultas y reportes",
+   "line": "Escribí consultas complejas en PostgreSQL con joins y funciones de ventana",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Conocimiento de Python para análisis de datos",
+   "line": "Analicé encuestas de clientes usando pandas y notebooks de Jupyter",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Experiencia con pipelines ETL y orquestadores como Airflow",
+   "line": "Programé cargas nocturnas de datos con DAGs que corren cada madrugada",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Gestión de proyectos con metodologías ágiles como Scrum",
+   "line": "Lideré sprints de dos semanas como Scrum Master de un equipo de desarrollo",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Inglés avanzado para reuniones con equipos internacionales",
+   "line": "Presenté avances semanales en inglés a socios de Estados Unidos y Canadá",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Capacidad para presentar hallazgos a personas no técnicas",
+   "line": "Expliqué resultados de modelos a gerentes comerciales sin formación técnica",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Control de presupuesto y cronograma de proyectos",
+   "line": "Administré un presupuesto anual de 200 mil dólares y sus plazos de entrega",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Experiencia con servicios de AWS para datos",
+   "line": "Monté un lago de datos en S3 con catálogos de Glue y consultas en Athena",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Modelado de data warehouse dimensional",
+   "line": "Diseñé tablas de hechos y dimensiones con esquema estrella para finanzas",
+   "label": true,
+   "set": "A"
+  },
+  {
+   "req": "Experiencia creando tableros en Power BI o Tableau",
+   "line": "Atendí llamadas de clientes para resolver reclamos de facturación",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Dominio de SQL para consultas y reportes",
+   "line": "Organicé eventos corporativos y la logística de proveedores",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Conocimiento de Python para análisis de datos",
+   "line": "Diseñé piezas gráficas para redes sociales en Illustrator",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Experiencia con pipelines ETL y orquestadores como Airflow",
+   "line": "Negocié contratos de arrendamiento de locales comerciales",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Gestión de proyectos con metodologías ágiles como Scrum",
+   "line": "Realicé conciliaciones bancarias y cierres contables mensuales",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Inglés avanzado para reuniones con equipos internacionales",
+   "line": "Escribí consultas SQL para reportes de inventario",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Capacidad para presentar hallazgos a personas no técnicas",
+   "line": "Configuré servidores Linux y reglas de firewall",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Control de presupuesto y cronograma de proyectos",
+   "line": "Entrené modelos de clasificación de imágenes con redes convolucionales",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Experiencia con servicios de AWS para datos",
+   "line": "Impartí talleres de oratoria para estudiantes universitarios",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Modelado de data warehouse dimensional",
+   "line": "Coordiné la mudanza de oficinas y el inventario de mobiliario",
+   "label": false,
+   "set": "A"
+  },
+  {
+   "req": "Experiencia creando tableros en Power BI o Tableau",
+   "line": "Modelé un data warehouse en Snowflake con esquema estrella",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Inglés avanzado para reuniones con equipos internacionales",
+   "line": "Facilité reuniones con clientes para levantar requerimientos de negocio",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Experiencia con servicios de AWS para datos",
+   "line": "Construí tableros en Power BI para el seguimiento de ventas regionales",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Conocimiento de Python para análisis de datos",
+   "line": "Escribí consultas SQL complejas sobre PostgreSQL para reportes mensuales",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Gestión de proyectos con metodologías ágiles como Scrum",
+   "line": "Diseñé indicadores de rendimiento (KPI) junto al área comercial",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Experiencia con pipelines ETL y orquestadores como Airflow",
+   "line": "Coordiné un equipo de cinco personas con metodología Scrum",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Capacidad para presentar hallazgos a personas no técnicas",
+   "line": "Optimicé consultas SQL que redujeron el tiempo de carga en un 40 %",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Control de presupuesto y cronograma de proyectos",
+   "line": "Validé la calidad de datos de tres fuentes distintas antes de cada cierre",
+   "label": false,
+   "set": "B"
+  },
+  {
+   "req": "Inglés avanzado para reuniones con equipos internacionales",
+   "line": "Trabajé dos años con un equipo en Toronto comunicándome a diario en inglés",
+   "label": true,
+   "set": "B"
+  },
+  {
+   "req": "Experiencia con pipelines ETL y orquestadores como Airflow",
+   "line": "Orquesté flujos de extracción y carga de datos programados cada hora",
+   "label": true,
+   "set": "B"
+  },
+  {
+   "req": "Capacidad para presentar hallazgos a personas no técnicas",
+   "line": "Traduje resultados estadísticos a recomendaciones simples para el equipo de ventas",
+   "label": true,
+   "set": "B"
+  },
+  {
+   "req": "Diseño de pipelines de datos en la nube",
+   "line": "Construí procesos de ingesta en Google Cloud con Dataflow",
+   "label": true,
+   "set": "B"
+  }
+ ]
+}
