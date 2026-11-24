@@ -49,6 +49,33 @@ async function cohereEmbed(texts: string[], model: string, inputType: InputType)
   return out;
 }
 
+// --- Generación de carta con LLM (Cohere Chat). Reusa la misma clave de SSM. ---
+// Se usa SOLO con la evidencia que la comparación semántica ya identificó (§5.3).
+export async function cohereChat(model: string, prompt: string): Promise<string> {
+  const key = await cohereKey();
+  let lastErr = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch("https://api.cohere.com/v2/chat", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], temperature: 0.3 }),
+    });
+    if (res.ok) {
+      const data: any = await res.json();
+      // v2/chat: message.content es un arreglo de bloques { type:"text", text }.
+      const parts = data?.message?.content;
+      const text = Array.isArray(parts) ? parts.map((p: any) => p?.text ?? "").join("").trim() : "";
+      if (text) return text;
+      lastErr = "Respuesta del modelo vacía";
+      break;
+    }
+    lastErr = `Cohere ${res.status}: ${(await res.text()).slice(0, 200)}`;
+    if (res.status < 500 && res.status !== 429) break;
+    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+  }
+  throw new Error(lastErr || "No se pudo generar la carta");
+}
+
 const toB = (v: number[]) => Buffer.from(new Float32Array(v).buffer);
 const fromB = (b: Uint8Array) =>
   Array.from(new Float32Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)));

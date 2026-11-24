@@ -33,9 +33,12 @@ export function Exclusions() {
         <button className="btn primary" disabled={busy || !name.trim()}>Añadir</button>
       </form>
       <div className="note">
-        <b>Qué cubre:</b> la exclusión bloquea postulaciones desde esta herramienta. Reconoce el mismo nombre aunque cambien
-        mayúsculas, tildes, puntuación o sufijos como S.A., S.R.L. o Ltda., y te avisa de nombres parecidos.
-        <br /><b>Qué no cubre:</b> no oculta tu perfil en otros portales y no detecta filiales ni razones sociales distintas por sí sola.
+        <b>Qué cubre:</b> la exclusión <b>bloquea el envío</b> de postulaciones desde Postula hacia esa empresa. En el
+        catálogo la verás marcada como <span className="pill danger sm">Excluida</span> y no podrás iniciar la postulación.
+        Reconoce el mismo nombre aunque cambien mayúsculas, tildes, puntuación o sufijos como S.A., S.R.L. o Ltda., y te
+        avisa con <span className="pill warn sm">Revisar nombre</span> cuando un nombre se parece mucho a uno excluido.
+        <br /><b>Qué no cubre:</b> no oculta tu perfil en otros portales ni en buscadores, y no detecta por sí sola
+        filiales, marcas comerciales o razones sociales distintas de la misma empresa: esas debes añadirlas aparte.
       </div>
       {!list.length && <div className="card center muted">Tu lista está vacía.</div>}
       <ul className="list">

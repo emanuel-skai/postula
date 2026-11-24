@@ -5,7 +5,7 @@ import { HttpError, requireUser, loginPayload, doLogin, isAdmin } from "./auth.j
 import { userPk, CATALOG_PK, getItem, putItem, deleteItem, queryPrefix, deleteAllForPk, addCounters } from "./db.js";
 import { checkExclusion, normalizeCompany } from "./exclusion.js";
 import { splitLines, coverage, rankProfiles, bestThreshold, findGenericPhrases, cosine, type ProfileResult } from "./match.js";
-import { embed, pingCohere, type EmbedStats } from "./embeddings.js";
+import { embed, pingCohere, cohereChat, type EmbedStats } from "./embeddings.js";
 import { SEED_PROFILES, SEED_VACANCIES, GENERIC_SAMPLE } from "./seed.js";
 
 type Ev = {
@@ -167,6 +167,41 @@ function buildDraft(vac: any, best: ProfileResult | undefined) {
   }
   lines.push("", "Quedo atenta a sus comentarios.", "Ana Solano (ficticia)");
   return lines.join("\n");
+}
+
+// Logros/evidencia que la comparación semántica marcó como cubiertos, para el perfil elegido.
+function evidenceForApplication(vac: any, app: any): string[] {
+  const ranked: ProfileResult[] = vac?.analysis?.ranked ?? [];
+  const chosen = ranked.find((p) => p.profileId === app.profileId) ?? ranked[0];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const r of chosen?.requirements ?? []) {
+    if (r.covered && r.evidence && !seen.has(r.evidence)) { seen.add(r.evidence); out.push(r.evidence); }
+  }
+  return out;
+}
+
+// #10 · Borrador con LLM a partir EXCLUSIVAMENTE de la evidencia ya identificada.
+// Si no hay acceso al modelo o falla, cae al borrador determinista buildDraft().
+async function generateLetter(vac: any, app: any): Promise<string> {
+  const evidence = evidenceForApplication(vac, app);
+  if (!evidence.length) return buildDraft(vac, (vac?.analysis?.ranked ?? [])[0]);
+  const chatModel = (config as any).chatModel;
+  if (!chatModel) return buildDraft(vac, (vac?.analysis?.ranked ?? [])[0]);
+  const prompt = [
+    "Redacta una carta de presentación breve (máximo 180 palabras), en español, tono profesional y cálido, sin exagerar.",
+    `Empresa: ${app.company}. Puesto: ${app.title}.`,
+    "Usa ÚNICAMENTE los siguientes logros verificados del candidato; no inventes experiencia, cifras ni habilidades que no estén aquí:",
+    ...evidence.map((e) => `- ${e}`),
+    "Reglas: no uses frases genéricas de relleno (por ejemplo «soy proactiva» o «me interesa cualquier puesto»); firma como «Ana Solano (ficticia)»; no inventes datos de contacto.",
+    "Devuelve solo el texto de la carta, sin encabezados de formato ni comillas.",
+  ].join("\n");
+  try {
+    return await cohereChat(chatModel, prompt);
+  } catch (e) {
+    console.error("generateLetter fallback", e);
+    return buildDraft(vac, (vac?.analysis?.ranked ?? []).find((p: ProfileResult) => p.profileId === app.profileId) ?? (vac?.analysis?.ranked ?? [])[0]);
+  }
 }
 
 // ---------- calibración (Tabla 11) ----------
@@ -443,6 +478,19 @@ async function route(ev: Ev) {
     const content = str(body.content, "contenido", MAX_TEXT);
     const timeline = a.status === "preparada" ? a.timeline : [...a.timeline, { status: "preparada", at: now(), note: "Guardada y lista para aprobación. Nada se ha enviado todavía." }];
     const upd = { ...a, content, edited: content !== a.originalContent, status: "preparada", timeline, updatedAt: now() };
+    await putItem(upd);
+    return json(200, { application: upd, generic: findGenericPhrases(content), state: await publicState(pk, addr) });
+  }
+  if (is("POST", "applications", "*", "draft-letter")) {
+    // #10 · Regenera el contenido con el LLM usando SOLO la evidencia identificada. No envía nada.
+    const a = await getItem(pk, `APP#${r[1]}`);
+    if (!a) throw new HttpError(404, "Solicitud no encontrada");
+    if (a.status !== "borrador" && a.status !== "preparada")
+      throw new HttpError(409, "Esta solicitud ya fue enviada; no se puede regenerar.");
+    const v = await getItem(pk, `VAC#${a.vacancyId}`);
+    const content = await generateLetter(v, a);
+    // El texto regenerado pasa a ser la nueva base: se muestra como «sin editar» para invitar a personalizarlo.
+    const upd = { ...a, content, originalContent: content, edited: false, updatedAt: now() };
     await putItem(upd);
     return json(200, { application: upd, generic: findGenericPhrases(content), state: await publicState(pk, addr) });
   }

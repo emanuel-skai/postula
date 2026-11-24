@@ -1,6 +1,7 @@
 {
   "engine": "cohere",
   "model": "embed-v4.0",
+  "chatModel": "command-r-08-2024",
   "tau": 0.28,
   "queryInputType": "search_query",
   "documentInputType": "search_document",
