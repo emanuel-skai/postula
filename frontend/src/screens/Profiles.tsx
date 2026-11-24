@@ -17,6 +17,10 @@ export function Profiles() {
     setConfirmWipe(false);
     go("#/vacantes");
   });
+  const seed = () => run(async () => {
+    setState(await api<AppState>("/api/seed", { method: "POST" }));
+    toast("Se cargó el perfil de ejemplo «Ana Solano» con tres versiones de CV.");
+  });
   return (
     <section className="stack">
       <div className="section-head">
@@ -26,9 +30,18 @@ export function Profiles() {
         </div>
         {profiles.length < MAX && !adding && <button className="btn" onClick={() => setAdding(true)}>+ Nuevo perfil</button>}
       </div>
+      {!profiles.length && !adding && (
+        <div className="seed-banner card">
+          <div>
+            <b>Carga datos de ejemplo</b>
+            <span className="muted">Rellena el perfil ficticio de «Ana Solano» (analista de datos) con tres CV listos para probar el análisis.</span>
+          </div>
+          <button className="btn primary" disabled={busy} onClick={seed}>{busy ? "Cargando…" : "Cargar datos de ejemplo"}</button>
+        </div>
+      )}
       {adding && <ProfileEditor onDone={() => setAdding(false)} />}
       {profiles.map((p) => <ProfileEditor key={p.id} profile={p} />)}
-      {!profiles.length && !adding && <div className="card center muted">Sin perfiles todavía.</div>}
+      {!profiles.length && !adding && <div className="card center muted">Sin perfiles todavía. Crea uno con «+ Nuevo perfil» o carga el de ejemplo.</div>}
 
       <div className="card danger-zone">
         <h3>Borrar mis datos</h3>
@@ -46,6 +59,7 @@ function ProfileEditor({ profile, onDone }: { profile?: Profile; onDone?: () => 
   const [name, setName] = useState(profile?.name ?? "");
   const [cv, setCv] = useState(profile?.cv ?? "");
   const [confirmDel, setConfirmDel] = useState(false);
+  const [parsing, setParsing] = useState(false);
   useEffect(() => { setName(profile?.name ?? ""); setCv(profile?.cv ?? ""); }, [profile?.updatedAt]);
   const dirty = !profile || name !== profile.name || cv !== profile.cv;
   const save = (e: React.FormEvent) => {
@@ -57,12 +71,41 @@ function ProfileEditor({ profile, onDone }: { profile?: Profile; onDone?: () => 
     });
   };
   const del = () => run(async () => { setState(await api(`/api/profiles/${profile!.id}`, { method: "DELETE" })); });
+  // #9 · Importar un CV en PDF: el texto se extrae EN EL NAVEGADOR y se vuelca al textarea para revisarlo.
+  const onPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite volver a elegir el mismo archivo
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast("Elige un archivo PDF", "error");
+      return;
+    }
+    setParsing(true);
+    try {
+      const { extractPdfText } = await import("../pdf"); // carga la librería solo al usarla
+      const text = await extractPdfText(file);
+      if (!text) { toast("No se pudo extraer texto (¿es un PDF escaneado como imagen?)", "error"); return; }
+      setCv((prev) => (prev.trim() ? `${prev.trim()}\n${text}` : text));
+      toast("Texto del PDF importado. Revísalo: deja un logro por línea.");
+    } catch (err) {
+      toast(`No se pudo leer el PDF: ${(err as Error).message}`, "error");
+    } finally {
+      setParsing(false);
+    }
+  };
   return (
     <form className="card form" onSubmit={save}>
       <label>Nombre del perfil<input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Analista de datos" /></label>
       <label>CV <span className="opt">{countValid(cv)} líneas válidas</span>
         <textarea rows={7} value={cv} onChange={(e) => setCv(e.target.value)} placeholder={"Construí tableros en Power BI para ventas regionales\nEscribí consultas SQL complejas para reportes mensuales"} />
       </label>
+      <div className="row gap wrap import-row">
+        <label className="btn ghost sm file-btn">
+          {parsing ? "Leyendo PDF…" : "Importar CV en PDF"}
+          <input type="file" accept="application/pdf,.pdf" onChange={onPdf} disabled={parsing} hidden />
+        </label>
+        <span className="muted small">El PDF se procesa en tu navegador; no se sube a ningún servidor. Luego ajusta el texto a un logro por línea.</span>
+      </div>
       <div className="row between wrap gap">
         {profile
           ? (!confirmDel
