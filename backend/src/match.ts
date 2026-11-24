@@ -29,6 +29,7 @@ export interface RequirementResult {
   requirement: string;
   covered: boolean;
   evidence: string | null; // línea ganadora (solo si cubierto)
+  closest: string | null; // línea más parecida aunque NO alcance τ: habilidad relacionada pero distinta
   score: number; // s_i = max_j S_ij — uso técnico, no se muestra como %
 }
 
@@ -57,7 +58,8 @@ export function coverage(
       if (s > best) { best = s; bestJ = j; }
     }
     const covered = bestJ >= 0 && best >= tau;
-    return { requirement: req, covered, evidence: covered ? cvLines[bestJ] : null, score: Math.max(best, 0) };
+    const closest = bestJ >= 0 ? cvLines[bestJ] : null;
+    return { requirement: req, covered, evidence: covered ? closest : null, closest, score: Math.max(best, 0) };
   });
   const covered = reqs.filter((r) => r.covered).length;
   const meanScore = reqs.length ? reqs.reduce((a, r) => a + r.score, 0) / reqs.length : 0;

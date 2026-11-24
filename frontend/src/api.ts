@@ -42,7 +42,7 @@ export type Verdict =
 
 export interface Profile { id: string; name: string; cv: string; createdAt: string; updatedAt: string }
 export interface Exclusion { id: string; name: string; normalized: string; createdAt: string }
-export interface ReqResult { requirement: string; covered: boolean; evidence: string | null; score: number }
+export interface ReqResult { requirement: string; covered: boolean; evidence: string | null; closest?: string | null; score: number }
 export interface ProfileResult { profileId: string; profileName: string; covered: number; total: number; meanScore: number; lines: number; requirements: ReqResult[] }
 export interface Analysis {
   model: string; tau: number; at: string; ms: number;

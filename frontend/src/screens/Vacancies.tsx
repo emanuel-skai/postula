@@ -79,6 +79,10 @@ export function VacancyDetail({ id }: { id: string }) {
 
   const blocked = v.verdict.status === "blocked";
   const review = v.verdict.status === "review";
+  // La solicitud ya partió (envío simulado): el análisis queda congelado.
+  const sent = v.applicationStatus === "enviada" || v.applicationStatus === "recepcion_confirmada";
+  // Se puede (re)analizar mientras no se haya enviado: sin solicitud, o en borrador/preparada.
+  const canReanalyze = !sent;
   const reqLines = v.requirements.split("\n").map((s) => s.trim()).filter(Boolean);
 
   return (
@@ -114,14 +118,16 @@ export function VacancyDetail({ id }: { id: string }) {
         <h3>Requisitos</h3>
         <ul className="req-list">{reqLines.map((r, i) => <li key={i}>{r}</li>)}</ul>
 
+        {/* P4: mientras la solicitud sigue en borrador/preparada (no enviada) se puede recalcular el análisis. */}
         {!blocked && !review && (
           <div className="row gap wrap">
-            {!v.applicationId && (
+            {canReanalyze && (
               <button className="btn primary" onClick={analyze} disabled={busy || !state!.profiles.length}>
-                {analyzing ? "Analizando con embeddings…" : v.analysis ? (v.analysisStale ? "Volver a analizar (cambiaron tus perfiles)" : "Volver a analizar") : "Analizar"}
+                {analyzing ? "Analizando con embeddings…" : v.analysis ? (v.analysisStale ? "Recalcular análisis" : "Volver a analizar") : "Analizar"}
               </button>
             )}
-            {v.applicationId && <a className="btn primary" href={`#/postulacion/${v.applicationId}`}>Ver mi postulación</a>}
+            {v.applicationId && <a className={`btn ${canReanalyze ? "ghost" : "primary"}`} href={`#/postulacion/${v.applicationId}`}>Ver mi postulación</a>}
+            {sent && <span className="muted small">La solicitud ya se envió; el análisis queda fijo como registro de lo que la respaldó.</span>}
             {!state!.profiles.length && <span className="muted">Agrega un perfil en <a href="#/perfiles">Mis perfiles</a> para analizar.</span>}
           </div>
         )}
@@ -129,7 +135,7 @@ export function VacancyDetail({ id }: { id: string }) {
       </div>
 
       {v.analysis && !blocked && !review && (
-        <AnalysisView v={v} a={v.analysis} onPrepare={prepare} busy={busy} />
+        <AnalysisView v={v} a={v.analysis} onPrepare={prepare} busy={busy} canReanalyze={canReanalyze} analyzing={analyzing} onReanalyze={analyze} profiles={state!.profiles.length} />
       )}
 
       <div className="row end">
@@ -141,12 +147,23 @@ export function VacancyDetail({ id }: { id: string }) {
   );
 }
 
-function AnalysisView({ v, a, onPrepare, busy }: { v: Vacancy; a: Analysis; onPrepare: (pid?: string) => void; busy: boolean }) {
+function AnalysisView({ v, a, onPrepare, busy, canReanalyze, analyzing, onReanalyze, profiles }: {
+  v: Vacancy; a: Analysis; onPrepare: (pid?: string) => void; busy: boolean;
+  canReanalyze: boolean; analyzing: boolean; onReanalyze: () => void; profiles: number;
+}) {
   const [open, setOpen] = useState<string | null>(a.recommendedProfileId);
   const rec = a.ranked.find((p) => p.profileId === a.recommendedProfileId) ?? a.ranked[0];
   return (
     <div className="stack">
-      {v.analysisStale && <div className="alert warn">Tus perfiles cambiaron desde este análisis. Vuelve a analizar para actualizar el resultado.</div>}
+      {v.analysisStale && (
+        <div className="alert warn" role="alert">
+          <b>Análisis desactualizado</b>
+          <span>Tus perfiles cambiaron desde este análisis: lo que ves abajo ya no corresponde a tu CV actual.</span>
+          {canReanalyze
+            ? <div className="row gap wrap"><button className="btn primary sm" onClick={onReanalyze} disabled={busy || !profiles}>{analyzing ? "Recalculando…" : "Recalcular análisis"}</button></div>
+            : <span className="muted small">La solicitud ya se envió; este análisis queda como registro.</span>}
+        </div>
+      )}
       {rec && (
         <div className="card recommended">
           <p className="eyebrow accent">Perfil recomendado</p>
@@ -182,11 +199,21 @@ function AnalysisView({ v, a, onPrepare, busy }: { v: Vacancy; a: Analysis; onPr
                           <span className="req">{r.requirement}</span>
                           {r.covered
                             ? <span className="ev">Evidencia: «{r.evidence}»</span>
-                            : <span className="ev none">Sin cubrir</span>}
+                            : (
+                              <>
+                                <span className="ev none">Sin cubrir: no encontramos una línea de tu CV que signifique lo mismo.</span>
+                                {r.closest && <span className="ev closest">Lo más parecido (habilidad relacionada pero distinta): «{r.closest}». Revísalo tú: tener algo parecido no demuestra que cumplas el requisito.</span>}
+                              </>
+                            )}
                         </div>
                       </li>
                     ))}
                   </ul>
+                  {p.covered < p.total && (
+                    <p className="note review-note">
+                      Una coincidencia de <b>significado</b> no prueba por sí sola que cumplas la habilidad (por ejemplo, el dominio de un idioma). Toma estos resultados como una guía que <b>requiere tu revisión</b>, no como una verificación.
+                    </p>
+                  )}
                   {!v.applicationId && p.profileId !== rec?.profileId && (
                     <button className="btn ghost sm" disabled={busy} onClick={() => onPrepare(p.profileId)}>Usar este perfil</button>
                   )}
