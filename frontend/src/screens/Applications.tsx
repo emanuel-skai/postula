@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, findGeneric, type AppState, type Application, type AppStatus } from "../api";
 import { go, useData } from "../App";
-import { Back, Coverage, StatusPill, Stepper, fmtDate } from "./ui";
+import { Back, Coverage, StatusPill, StatusLegend, STATUS_DESC, Stepper, fmtDate } from "./ui";
 
 export function Applications() {
   const { state } = useData();
@@ -14,6 +14,7 @@ export function Applications() {
           <p className="muted">«Enviada» no significa que la empresa la recibió o la leyó.</p>
         </div>
       </div>
+      {apps.length > 0 && <StatusLegend />}
       {!apps.length && <div className="card center muted">Aún no preparas ninguna postulación. Empieza desde <a href="#/vacantes">Vacantes</a>.</div>}
       <ul className="list">
         {apps.map((a) => (
@@ -23,6 +24,7 @@ export function Applications() {
                 <span className="company">{a.company}</span>
                 <span className="title">{a.title}</span>
                 <span className="meta">Actualizada {fmtDate(a.updatedAt)}{a.profileName ? ` · perfil ${a.profileName}` : ""}</span>
+                <span className="status-caption">{STATUS_DESC[a.status]}</span>
               </div>
               <div className="vac-side"><StatusPill status={a.status} /><span className="chev" aria-hidden>›</span></div>
             </a>
@@ -44,24 +46,38 @@ export function ApplicationFlow({ id, step }: { id: string; step: string | null 
 }
 
 function ReviewView({ a }: { a: Application }) {
-  const { run, setState, busy } = useData();
+  const { run, setState, busy, toast } = useData();
   const [text, setText] = useState(a.content);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   useEffect(() => setText(a.content), [a.id]);
   const generic = useMemo(() => findGeneric(text), [text]);
+  const dirty = text !== a.content;
   const save = () => run(async () => {
     const r = await api<{ application: Application; state: AppState }>(`/api/applications/${a.id}`, { method: "PUT", body: { content: text } });
     setState(r.state);
     go(`#/postulacion/${a.id}?paso=aprobar`);
   });
   const discard = () => run(async () => { setState(await api(`/api/applications/${a.id}`, { method: "DELETE" })); go(`#/vacante/${a.vacancyId}`); });
+  // #10 · Genera un borrador con el LLM usando SOLO la evidencia que ya identificó la comparación semántica.
+  const regenerate = async () => {
+    setRegenerating(true);
+    await run(async () => {
+      const r = await api<{ application: Application; state: AppState }>(`/api/applications/${a.id}/draft-letter`, { method: "POST" });
+      setState(r.state);
+      setText(r.application.content);
+      toast("Borrador regenerado a partir de tu evidencia. Revísalo y ajústalo.");
+    });
+    setRegenerating(false);
+  };
 
   return (
     <section className="stack">
       <Back href={`#/vacante/${a.vacancyId}`} label="Vacante" />
       <Stepper step={0} />
       <div className="card">
-        <h1 className="title-lg">Revisa la empresa y el contenido antes de continuar</h1>
+        <h1 className="title-lg">Corrige el texto y continúa</h1>
+        <p className="muted small">Paso 1 de 2 · edita el contenido para que hable de <b>esta</b> vacante. En el paso siguiente lo apruebas; nada se envía hasta que autorices.</p>
         <Recipient a={a} />
         {a.coverage && <p className="muted small">Borrador armado con tu perfil «{a.profileName}» · <Coverage {...a.coverage} /></p>}
         {generic.length > 0 && (
@@ -74,12 +90,19 @@ function ReviewView({ a }: { a: Application }) {
         <label className="block">Contenido de la postulación
           <textarea className="tall" value={text} onChange={(e) => setText(e.target.value)} rows={16} />
         </label>
+        <div className="row gap wrap edit-tools">
+          <button className="btn ghost sm" type="button" onClick={regenerate} disabled={busy || regenerating}>
+            {regenerating ? "Generando…" : "✨ Generar borrador con IA (usa tu evidencia)"}
+          </button>
+          {dirty && <button className="btn ghost sm" type="button" onClick={() => setText(a.content)} disabled={busy}>Deshacer cambios</button>}
+          <span className="muted small">La IA solo usa los logros que la comparación marcó como evidencia; tú decides qué queda.</span>
+        </div>
         <p className="nothing-sent"><span className="dot" /> Nada se ha enviado todavía.</p>
         <div className="row between wrap gap">
           {!confirmDiscard
             ? <button className="btn ghost sm" onClick={() => setConfirmDiscard(true)}>Descartar borrador</button>
             : <span className="row gap"><button className="btn danger sm" onClick={discard}>Sí, descartar</button><button className="btn ghost sm" onClick={() => setConfirmDiscard(false)}>No</button></span>}
-          <button className="btn primary" onClick={save} disabled={busy || !text.trim()}>Guardar y pasar a aprobación</button>
+          <button className="btn primary" onClick={save} disabled={busy || !text.trim()}>Guardar y pasar a aprobar →</button>
         </div>
       </div>
     </section>
@@ -110,19 +133,21 @@ function ApproveView({ a }: { a: Application }) {
       <Back href={`#/postulacion/${a.id}`} label="Volver a editar" />
       <Stepper step={1} />
       <div className="card">
-        <h1 className="title-lg">Confirma lo que se enviará</h1>
+        <h1 className="title-lg">Aprueba lo que se enviará</h1>
+        <p className="muted small">Paso 2 de 2 · último paso. Revisa el destinatario y el texto; si algo no cuadra, vuelve a corregirlo.</p>
         <Recipient a={a} strong />
         <div className="content-preview">
           <div className="row between"><span className="label">Contenido completo</span>{a.edited ? <span className="pill accent sm">Editado por ti</span> : <span className="pill warn sm">Sin editar</span>}</div>
           <pre>{a.content}</pre>
         </div>
-        {generic.length > 0 && <div className="alert warn"><b>Aún contiene una frase genérica.</b><span>Puedes volver a editar antes de aprobar.</span></div>}
+        {generic.length > 0 && <div className="alert warn"><b>Aún contiene una frase genérica.</b><span>Puedes volver a corregir antes de aprobar.</span></div>}
+        {!a.edited && <p className="muted small">Este texto sigue como lo generó Postula. Puedes enviarlo así o <a href={`#/postulacion/${a.id}`}>volver a corregirlo</a>.</p>}
         <label className="check">
           <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} />
-          <span>Revisé el destinatario y el contenido. Autorizo este envío.</span>
+          <span>Revisé el destinatario y el contenido. Autorizo este envío (simulado).</span>
         </label>
         <div className="row between wrap gap">
-          <a className="btn ghost" href={`#/postulacion/${a.id}`}>Volver a editar</a>
+          <a className="btn ghost" href={`#/postulacion/${a.id}`}>← Volver a corregir</a>
           <button className="btn primary" disabled={!ok || busy} onClick={send}>Aprobar y simular envío</button>
         </div>
       </div>

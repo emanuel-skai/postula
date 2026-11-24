@@ -317,3 +317,54 @@ tr.miss td { background: var(--danger-soft); }
 .admin-stats span:first-child { color: var(--accent-ink); font-weight: 600; }
 .pill.neutral { background: var(--surface-2); color: var(--muted); }
 .pill.sm { font-size: 11px; padding: 1px 7px; }
+
+/* --- Mejoras pruebas de campo (§5) --- */
+
+/* Insignia de estado con punto + leyenda (CU3, #6) */
+.st-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .75; flex: none; display: inline-block; }
+.status-caption { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.status-legend { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); }
+.status-legend summary { cursor: pointer; font-weight: 600; color: var(--fg-2); font-size: 15px; }
+.status-legend dl { margin: 14px 0 0; display: flex; flex-direction: column; gap: 12px; }
+.status-legend dl > div { display: grid; grid-template-columns: 210px 1fr; gap: 4px 16px; align-items: center; }
+.status-legend dt { margin: 0; }
+.status-legend dd { margin: 0; color: var(--fg-2); font-size: 14px; }
+@media (max-width: 560px) { .status-legend dl > div { grid-template-columns: 1fr; align-items: start; gap: 4px; } }
+
+/* Banner de datos de ejemplo (#1) */
+.seed-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+}
+.seed-banner > div { display: flex; flex-direction: column; gap: 3px; min-width: 220px; flex: 1; }
+.seed-banner b { font-size: 16px; }
+.seed-banner span { font-size: 14px; }
+
+/* Tarjeta de vacante expandible en el catálogo (#2) */
+.vac-card.expandable { display: block; padding: 0; }
+.vac-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 18px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; text-align: left;
+}
+.vac-detail { padding: 2px 18px 18px; }
+.vac-detail h3 { margin-top: 6px; }
+.vac-detail .req-list { margin-bottom: 14px; }
+.chev { transition: transform .15s ease; }
+.chev.down { transform: rotate(90deg); }
+
+/* Herramientas de edición del borrador (#5, #10) */
+.edit-tools { margin-top: 10px; align-items: center; }
+.edit-tools .muted { flex: 1 1 220px; }
+
+/* Importar CV en PDF (#9) */
+.import-row { align-items: center; }
+.import-row .muted { flex: 1 1 220px; }
+.file-btn { flex-direction: row; cursor: pointer; }
+
+/* Evidencia: coincidencia insuficiente, se muestra lo más parecido (#8) */
+.evidence .ev.closest {
+  display: block; font-size: 13.5px; color: var(--fg-2); margin-top: 6px;
+  background: var(--warn-soft); padding: 7px 10px; border-radius: 8px;
+}
+.note.review-note { margin-top: 12px; }
